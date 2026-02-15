@@ -1,4 +1,6 @@
 import type {
+  CheckSolvedRequest,
+  CheckSolvedResponse,
   Difficulty,
   PuzzleResponse,
   ValidateRequest,
@@ -22,5 +24,17 @@ export async function validateGrid(
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`validateGrid failed: ${res.status}`);
+  return res.json();
+}
+
+export async function checkSolved(
+  body: CheckSolvedRequest,
+): Promise<CheckSolvedResponse> {
+  const res = await fetch("/api/check-solved", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`checkSolved failed: ${res.status}`);
   return res.json();
 }
