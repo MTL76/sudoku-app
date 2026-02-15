@@ -1,14 +1,76 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { describe, expect, it, vi } from "vitest";
-import { healthHandler } from "./app";
+import {
+  checkSolvedHandler,
+  healthHandler,
+  puzzleHandler,
+  validateHandler,
+} from "./app";
+import { getPuzzleById } from "./sudoku/puzzle-bank";
+
+const createRes = () => {
+  const json = vi.fn();
+  const status = vi.fn().mockImplementation(() => ({ json }));
+  return { json, status };
+};
 
 describe("API", () => {
   it("GET /health returns ok true", () => {
-    const json = vi.fn();
+    const { json } = createRes();
     const res = { json } as unknown as Response;
 
     healthHandler({} as never, res, (() => undefined) as never);
 
     expect(json).toHaveBeenCalledWith({ ok: true });
+  });
+
+  it("GET /api/puzzle returns puzzle for valid difficulty", () => {
+    const { json } = createRes();
+    const req = { query: { difficulty: "easy" } } as unknown as Request;
+    const res = { json } as unknown as Response;
+
+    puzzleHandler(req, res, (() => undefined) as never);
+
+    const payload = json.mock.calls[0][0];
+    expect(payload.difficulty).toBe("easy");
+    expect(payload.puzzleId).toBeTypeOf("string");
+    expect(payload.grid).toHaveLength(9);
+  });
+
+  it("GET /api/puzzle returns 400 for invalid difficulty", () => {
+    const { status } = createRes();
+    const req = { query: { difficulty: "medium" } } as unknown as Request;
+    const res = { status } as unknown as Response;
+
+    puzzleHandler(req, res, (() => undefined) as never);
+
+    expect(status).toHaveBeenCalledWith(400);
+  });
+
+  it("POST /api/validate returns valid for empty grid", () => {
+    const { json } = createRes();
+    const req = {
+      body: { grid: Array.from({ length: 9 }, () => Array(9).fill(0)) },
+    } as unknown as Request;
+    const res = { json } as unknown as Response;
+
+    validateHandler(req, res, (() => undefined) as never);
+
+    expect(json).toHaveBeenCalledWith({ valid: true, errors: [] });
+  });
+
+  it("POST /api/check-solved returns solved true for matching solution", () => {
+    const puzzle = getPuzzleById("easy-001");
+    if (!puzzle) throw new Error("Test puzzle easy-001 not found");
+
+    const { json } = createRes();
+    const req = {
+      body: { puzzleId: puzzle.puzzleId, grid: puzzle.solution },
+    } as unknown as Request;
+    const res = { json } as unknown as Response;
+
+    checkSolvedHandler(req, res, (() => undefined) as never);
+
+    expect(json).toHaveBeenCalledWith({ solved: true, valid: true });
   });
 });
