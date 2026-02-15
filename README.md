@@ -1,192 +1,100 @@
-# Sudoku App
+# sudoku-app
 
-Mobile first Sudoku web app built in a TypeScript monorepo.
+Premium mobile first Sudoku web app built as a TypeScript monorepo.
 
-Scope in V1:
-- Frontend and backend only
-- No database
-- Puzzle state, notes, undo, and settings stay on client
-- Backend serves puzzles and validation APIs
+## Prerequisites
 
-## Stack
+* Node.js LTS
+* npm
 
-- Frontend: Vite, React, TypeScript
-- Backend: Node.js, Express, TypeScript
+## Setup
 
-## Repository
-
-```text
-.
-├── backend/
-│   ├── data/
-│   │   └── puzzles-dataset.json
-│   ├── scripts/
-│   │   └── build-puzzle-bank.mjs
-│   ├── src/
-│   │   ├── sudoku/
-│   │   │   ├── puzzle-bank.ts
-│   │   │   ├── puzzles.json
-│   │   │   └── validate.ts
-│   │   ├── __tests__/
-│   │   │   └── validate.test.ts
-│   │   ├── app.test.ts
-│   │   ├── app.ts
-│   │   └── index.ts
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   │   └── client.ts
-│   │   ├── components/
-│   │   │   ├── NumberPad.tsx
-│   │   │   ├── SudokuGrid.tsx
-│   │   │   └── TopBar.tsx
-│   │   ├── styles/
-│   │   │   └── app.css
-│   │   ├── types/
-│   │   │   └── sudoku.ts
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   └── package.json
-└── package.json
-```
-
-## Local Development
-
-Install dependencies:
+Install dependencies from repository root:
 
 ```bash
-cd backend && npm install
-cd ../frontend && npm install
-cd ..
+npm install
+npm install --prefix backend
+npm install --prefix frontend
 ```
 
-Run both services from root:
+## Run In Development
+
+Start backend and frontend from repository root:
 
 ```bash
 npm run dev
 ```
 
-Ports:
-- Backend: `http://localhost:3001`
-- Frontend: `http://localhost:5173`
+Default local URLs:
 
-Frontend uses Vite dev proxy for `/api` and `/health` to backend, so CORS is not used in this stage.
+* Frontend: `http://localhost:5173`
+* Backend: `http://localhost:3001`
 
-## API
+## Testing
 
-### `GET /health`
-
-```json
-{
-  "ok": true
-}
-```
-
-### `GET /api/puzzle?difficulty=easy|intermediate|difficult|expert`
-
-Returns one random puzzle from the puzzle bank.
-
-```json
-{
-  "puzzleId": "easy-001",
-  "difficulty": "easy",
-  "grid": [
-    [5, 3, 0, 6, 7, 8, 0, 1, 2],
-    [6, 7, 2, 1, 0, 5, 3, 0, 8],
-    [1, 0, 8, 3, 4, 2, 5, 6, 0],
-    [8, 5, 9, 7, 6, 1, 0, 2, 3],
-    [4, 2, 6, 8, 5, 3, 7, 9, 1],
-    [7, 1, 0, 9, 2, 4, 8, 5, 6],
-    [9, 6, 1, 5, 3, 0, 2, 8, 4],
-    [2, 8, 7, 4, 1, 9, 6, 3, 5],
-    [3, 0, 5, 2, 8, 6, 1, 7, 9]
-  ]
-}
-```
-
-### `POST /api/validate`
-
-Checks Sudoku conflicts for the submitted grid.
-
-Request:
-
-```json
-{
-  "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0]]
-}
-```
-
-Response shape:
-
-```json
-{
-  "valid": false,
-  "errors": [
-    {
-      "row": 0,
-      "col": 0,
-      "reason": "row",
-      "message": "Duplicate value 5 in row"
-    }
-  ]
-}
-```
-
-### `POST /api/check-solved`
-
-Checks whether a grid is valid and fully solved for a known puzzle.
-
-Request:
-
-```json
-{
-  "puzzleId": "easy-001",
-  "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0]]
-}
-```
-
-Response:
-
-```json
-{
-  "solved": false,
-  "valid": true
-}
-```
-
-## Frontend Features
-
-- Mobile first touch board with desktop mouse support
-- Difficulty selector and new game flow
-- Given cells locked and styled separately from user values
-- Notes mode with candidate toggles per cell
-- Undo for last five keypad actions
-- Automatic notes cleanup when any digit count reaches nine
-- Highlight selected cell, row, column, box, same value, and conflicts
-- Live check toggle plus explicit check action
-- Auto completion check when live check is off
-
-## Puzzle Bank
-
-A placeholder bank is included in `backend/src/sudoku/puzzles.json` so the app runs immediately.
-
-To build a larger bank from a dataset:
+Run backend tests:
 
 ```bash
-cd backend
-npm run puzzle:build
+npm test --prefix backend
 ```
 
-The build script:
-- Reads `backend/data/puzzles-dataset.json`
-- Buckets by difficulty
-- Verifies one solution using a solver that counts up to two
-- Writes `backend/src/sudoku/puzzles.json`
+## Build
 
-## Backend Tests
+Build backend:
 
 ```bash
-cd backend
-npm test
+npm run build --prefix backend
 ```
+
+Build frontend:
+
+```bash
+npm run build --prefix frontend
+```
+
+## Current Features
+
+* Mobile first Sudoku board with touch friendly controls
+* Difficulty selection with levels easy, intermediate, hard
+* Locked given cells and editable player cells
+* Notes mode with per cell candidate toggles
+* Undo support for recent actions
+* Live validation toggle and manual check action
+* Automatic completion check when the grid becomes full
+* Conflict highlighting for invalid placements
+
+UI difficulty labels are mapped to source dataset buckets:
+
+* UI easy maps to source intermediate
+* UI intermediate maps to source difficult
+* UI hard maps to source expert
+
+## Architecture
+
+Repository structure is split into `backend` and `frontend` under the root, similar to separate Pascal units with clear responsibilities.
+
+Backend responsibilities:
+
+* Serve puzzles through `/api/puzzle`
+* Validate Sudoku rules through `/api/validate`
+* Check solved state through `/api/check-solved`
+* Remain stateless with no database in V1
+
+Frontend responsibilities:
+
+* Hold full game state in memory including grid, notes, undo, and settings
+* Render UI and handle player interactions, similar to a Pascal form coordinating view logic
+
+API communication in development uses the Vite proxy. Frontend requests to `/api` and `/health` are forwarded to backend, so no CORS setup is needed for local development.
+
+Game state is intentionally client side in V1 to keep architecture simple, reduce backend scope, and allow fast UI iteration before persistence is introduced.
+
+## Development Approach
+
+This project follows a spec driven development approach. Features are first described and refined as clear requirements, usually in GitHub issues, before implementation begins. This keeps scope controlled and makes architectural decisions intentional rather than accidental.
+
+AI assistance is used to accelerate implementation, refactoring, test writing, and documentation updates. The AI is treated as a coding assistant, not as an autonomous decision maker. All product decisions, architectural choices, and final reviews are made by the human developer.
+
+Changes are implemented in small, focused branches and typically linked to GitHub issues. Pull requests are used to keep changes isolated and traceable. This helps maintain a clean commit history and makes it easier to understand why a change was made.
+
+The goal of this approach is not just speed, but clarity. Specifications drive the work. AI helps with execution. Responsibility remains with the developer.
