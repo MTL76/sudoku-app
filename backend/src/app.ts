@@ -43,7 +43,16 @@ export const puzzleHandler: RequestHandler = (req, res) => {
     return;
   }
 
-  const puzzle = getRandomPuzzle(difficulty);
+  let puzzle;
+  try {
+    puzzle = getRandomPuzzle(difficulty);
+  } catch (_error) {
+    res.status(500).json({
+      error: `no puzzles available for difficulty ${difficulty}`,
+    });
+    return;
+  }
+
   res.json({
     puzzleId: puzzle.puzzleId,
     difficulty: puzzle.difficulty,

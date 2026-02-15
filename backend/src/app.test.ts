@@ -37,6 +37,27 @@ describe("API", () => {
     expect(payload.grid).toHaveLength(9);
   });
 
+  it("GET /api/puzzle can return different puzzleIds across requests", () => {
+    const randomSpy = vi
+      .spyOn(Math, "random")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.7);
+
+    const req = { query: { difficulty: "easy" } } as unknown as Request;
+
+    const first = createRes();
+    puzzleHandler(req, { json: first.json } as unknown as Response, (() => undefined) as never);
+    const firstId = first.json.mock.calls[0][0].puzzleId as string;
+
+    const second = createRes();
+    puzzleHandler(req, { json: second.json } as unknown as Response, (() => undefined) as never);
+    const secondId = second.json.mock.calls[0][0].puzzleId as string;
+
+    randomSpy.mockRestore();
+
+    expect(firstId).not.toBe(secondId);
+  });
+
   it("GET /api/puzzle returns 400 for invalid difficulty", () => {
     const { status } = createRes();
     const req = { query: { difficulty: "medium" } } as unknown as Request;
