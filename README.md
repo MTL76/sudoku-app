@@ -1,30 +1,54 @@
-# Sudoku App Monorepo
+# Sudoku App
 
-Mobile-first Sudoku web app built as a TypeScript monorepo.
+Mobile first Sudoku web app built in a TypeScript monorepo.
 
-Initial scope:
-- Frontend + backend only (no database yet)
-- Backend serves health and Sudoku API endpoints
-- Frontend calls backend through Vite proxy during development
+Scope in V1:
+- Frontend and backend only
+- No database
+- Puzzle state, notes, undo, and settings stay on client
+- Backend serves puzzles and validation APIs
 
-## Tech Stack
+## Stack
 
-- Frontend: Vite + React + TypeScript
-- Backend: Node.js + Express + TypeScript
+- Frontend: Vite, React, TypeScript
+- Backend: Node.js, Express, TypeScript
 
-## Repository Structure
+## Repository
 
 ```text
 .
 ├── backend/
+│   ├── data/
+│   │   └── puzzles-dataset.json
+│   ├── scripts/
+│   │   └── build-puzzle-bank.mjs
 │   ├── src/
+│   │   ├── sudoku/
+│   │   │   ├── puzzle-bank.ts
+│   │   │   ├── puzzles.json
+│   │   │   └── validate.ts
+│   │   ├── __tests__/
+│   │   │   └── validate.test.ts
+│   │   ├── app.test.ts
+│   │   ├── app.ts
 │   │   └── index.ts
-│   ├── package.json
-│   └── tsconfig.json
-└── frontend/
-    ├── src/
-    ├── package.json
-    └── vite.config.ts
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── client.ts
+│   │   ├── components/
+│   │   │   ├── NumberPad.tsx
+│   │   │   ├── SudokuGrid.tsx
+│   │   │   └── TopBar.tsx
+│   │   ├── styles/
+│   │   │   └── app.css
+│   │   ├── types/
+│   │   │   └── sudoku.ts
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   └── package.json
+└── package.json
 ```
 
 ## Local Development
@@ -32,32 +56,26 @@ Initial scope:
 Install dependencies:
 
 ```bash
-cd frontend && npm install
-cd ../backend && npm install
+cd backend && npm install
+cd ../frontend && npm install
 cd ..
 ```
 
-Run both apps from repository root:
+Run both services from root:
 
 ```bash
 npm run dev
 ```
 
-Development ports:
-- Frontend: `http://localhost:5173`
+Ports:
 - Backend: `http://localhost:3001`
+- Frontend: `http://localhost:5173`
 
-Proxy approach:
-- Frontend uses Vite dev server proxy for `/api` and `/health` to `http://localhost:3001`.
-- Because of this proxy setup, CORS is not needed at this stage.
+Frontend uses Vite dev proxy for `/api` and `/health` to backend, so CORS is not used in this stage.
 
 ## API
 
 ### `GET /health`
-
-Health check endpoint.
-
-Example response:
 
 ```json
 {
@@ -65,66 +83,110 @@ Example response:
 }
 ```
 
-### `GET /api/puzzle`
+### `GET /api/puzzle?difficulty=easy|intermediate|difficult|expert`
 
-Returns a generated Sudoku puzzle for the UI.
-
-Example response shape:
+Returns one random puzzle from the puzzle bank.
 
 ```json
 {
-  "id": "puzzle-2026-02-15-001",
+  "puzzleId": "easy-001",
   "difficulty": "easy",
   "grid": [
-    [5, 3, null, null, 7, null, null, null, null],
-    [6, null, null, 1, 9, 5, null, null, null],
-    [null, 9, 8, null, null, null, null, 6, null],
-    [8, null, null, null, 6, null, null, null, 3],
-    [4, null, null, 8, null, 3, null, null, 1],
-    [7, null, null, null, 2, null, null, null, 6],
-    [null, 6, null, null, null, null, 2, 8, null],
-    [null, null, null, 4, 1, 9, null, null, 5],
-    [null, null, null, null, 8, null, null, 7, 9]
+    [5, 3, 0, 6, 7, 8, 0, 1, 2],
+    [6, 7, 2, 1, 0, 5, 3, 0, 8],
+    [1, 0, 8, 3, 4, 2, 5, 6, 0],
+    [8, 5, 9, 7, 6, 1, 0, 2, 3],
+    [4, 2, 6, 8, 5, 3, 7, 9, 1],
+    [7, 1, 0, 9, 2, 4, 8, 5, 6],
+    [9, 6, 1, 5, 3, 0, 2, 8, 4],
+    [2, 8, 7, 4, 1, 9, 6, 3, 5],
+    [3, 0, 5, 2, 8, 6, 1, 7, 9]
   ]
 }
 ```
 
 ### `POST /api/validate`
 
-Validates a Sudoku move or full grid state.
+Checks Sudoku conflicts for the submitted grid.
 
-Example request shape:
+Request:
 
 ```json
 {
-  "puzzleId": "puzzle-2026-02-15-001",
-  "grid": [
-    [5, 3, 4, 6, 7, 8, 9, 1, 2],
-    [6, 7, 2, 1, 9, 5, 3, 4, 8],
-    [1, 9, 8, 3, 4, 2, 5, 6, 7],
-    [8, 5, 9, 7, 6, 1, 4, 2, 3],
-    [4, 2, 6, 8, 5, 3, 7, 9, 1],
-    [7, 1, 3, 9, 2, 4, 8, 5, 6],
-    [9, 6, 1, 5, 3, 7, 2, 8, 4],
-    [2, 8, 7, 4, 1, 9, 6, 3, 5],
-    [3, 4, 5, 2, 8, 6, 1, 7, 9]
+  "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0]]
+}
+```
+
+Response shape:
+
+```json
+{
+  "valid": false,
+  "errors": [
+    {
+      "row": 0,
+      "col": 0,
+      "reason": "row",
+      "message": "Duplicate value 5 in row"
+    }
   ]
 }
 ```
 
-Example response shape:
+### `POST /api/check-solved`
+
+Checks whether a grid is valid and fully solved for a known puzzle.
+
+Request:
 
 ```json
 {
-  "valid": true,
-  "errors": []
+  "puzzleId": "easy-001",
+  "grid": [[0, 0, 0, 0, 0, 0, 0, 0, 0]]
 }
 ```
 
-## Roadmap
+Response:
 
-- Implement `GET /api/puzzle` with difficulty options
-- Implement `POST /api/validate` for move and board validation
-- Add frontend game state flow (new game, input, validation feedback)
-- Add unit tests for puzzle generation and validation logic
-- Add persistence layer when multi-session progress is needed
+```json
+{
+  "solved": false,
+  "valid": true
+}
+```
+
+## Frontend Features
+
+- Mobile first touch board with desktop mouse support
+- Difficulty selector and new game flow
+- Given cells locked and styled separately from user values
+- Notes mode with candidate toggles per cell
+- Undo for last five keypad actions
+- Automatic notes cleanup when any digit count reaches nine
+- Highlight selected cell, row, column, box, same value, and conflicts
+- Live check toggle plus explicit check action
+- Auto completion check when live check is off
+
+## Puzzle Bank
+
+A placeholder bank is included in `backend/src/sudoku/puzzles.json` so the app runs immediately.
+
+To build a larger bank from a dataset:
+
+```bash
+cd backend
+npm run puzzle:build
+```
+
+The build script:
+- Reads `backend/data/puzzles-dataset.json`
+- Buckets by difficulty
+- Verifies one solution using a solver that counts up to two
+- Writes `backend/src/sudoku/puzzles.json`
+
+## Backend Tests
+
+```bash
+cd backend
+npm test
+```
