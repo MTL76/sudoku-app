@@ -69,7 +69,9 @@ export const puzzleHandler: RequestHandler = (req, res) => {
 
 export const validateHandler: RequestHandler = (req, res) => {
   if (!isValidGrid(req.body?.grid)) {
-    res.status(400).json({ error: "grid must be a 9x9 matrix with values 0 to 9" });
+    res
+      .status(400)
+      .json({ error: "grid must be a 9x9 matrix with values 0 to 9" });
     return;
   }
 
@@ -83,7 +85,9 @@ export const checkSolvedHandler: RequestHandler = (req, res) => {
     return;
   }
   if (!isValidGrid(grid)) {
-    res.status(400).json({ error: "grid must be a 9x9 matrix with values 0 to 9" });
+    res
+      .status(400)
+      .json({ error: "grid must be a 9x9 matrix with values 0 to 9" });
     return;
   }
 
@@ -102,3 +106,14 @@ app.get("/health", healthHandler);
 app.get("/api/puzzle", puzzleHandler);
 app.post("/api/validate", validateHandler);
 app.post("/api/check-solved", checkSolvedHandler);
+
+import path from "node:path";
+
+const publicDir = path.join(process.cwd(), "public");
+app.use(express.static(publicDir));
+
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api")) return next();
+  if (req.path === "/health") return next();
+  res.sendFile(path.join(publicDir, "index.html"));
+});
