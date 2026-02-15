@@ -68,7 +68,13 @@ export function SudokuGrid({
                 onClick={() => onSelect(rowIndex, colIndex)}
               >
                 {value > 0 ? (
-                  <span>{value}</span>
+                  <span
+                    className={`cell-value ${
+                      isGiven ? "cell-value-given" : "cell-value-user"
+                    }`}
+                  >
+                    {value}
+                  </span>
                 ) : (
                   <span className="notes-grid" aria-hidden="true">
                     {Array.from({ length: 9 }, (_, noteIndex) => noteIndex + 1).map(
