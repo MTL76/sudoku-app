@@ -2,6 +2,7 @@ type NumberPadProps = {
   notesMode: boolean;
   liveValidation: boolean;
   canUndo: boolean;
+  disabledDigits: boolean[];
   onDigit: (digit: number) => void;
   onClear: () => void;
   onToggleNotesMode: () => void;
@@ -11,10 +12,13 @@ type NumberPadProps = {
   onNewGame: () => void;
 };
 
+// NumberPad is an input unit, similar to a toolbar on a Pascal form.
+// It does not own game state, it only calls callbacks from App.
 export function NumberPad({
   notesMode,
   liveValidation,
   canUndo,
+  disabledDigits,
   onDigit,
   onClear,
   onToggleNotesMode,
@@ -27,10 +31,12 @@ export function NumberPad({
     <section className="pad" aria-label="Sudoku controls">
       <div className="pad-grid">
         {Array.from({ length: 9 }, (_, index) => index + 1).map((digit) => (
+          // Disabled flag comes from derived state in App.
           <button
             key={digit}
             type="button"
             className="pad-key"
+            disabled={disabledDigits[digit]}
             onClick={() => onDigit(digit)}
           >
             {digit}

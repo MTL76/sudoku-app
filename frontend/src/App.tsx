@@ -6,11 +6,14 @@ import { TopBar } from "./components/TopBar";
 import "./styles/app.css";
 import type { Difficulty, Grid, Point } from "./types/sudoku";
 
+// Snapshot stores one undo step.
+// This is like keeping a copy of a Pascal record before mutation.
 type Snapshot = {
   grid: Grid;
   notes: number[][][];
 };
 
+// GameState is the main in memory model for one puzzle session.
 type GameState = {
   puzzleId: string;
   givens: Grid;
@@ -75,7 +78,10 @@ const initialGameState: GameState = {
   undo: [],
 };
 
+// App is the page controller component.
+// You can map it to a Pascal form that coordinates child units.
 export default function App() {
+  // Stored state is mutable session data that changes over time.
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [game, setGame] = useState<GameState>(initialGameState);
   const [selected, setSelected] = useState<Point | null>(null);
@@ -86,8 +92,9 @@ export default function App() {
   const [loadingPuzzle, setLoadingPuzzle] = useState(false);
   const validationRequestId = useRef(0);
   const completionRequestId = useRef(0);
-  const lastAutoCheckGrid = useRef("");
+  const wasCompleteRef = useRef(false);
 
+  // Loads a fresh puzzle and resets session level state.
   const loadPuzzle = useCallback(async (targetDifficulty: Difficulty) => {
     setLoadingPuzzle(true);
     setStatusMessage("Loading puzzle");
@@ -104,7 +111,7 @@ export default function App() {
       });
       setSelected(null);
       setStatusMessage("Puzzle ready");
-      lastAutoCheckGrid.current = "";
+      wasCompleteRef.current = false;
     } catch (_error) {
       setStatusMessage("Could not load puzzle");
     } finally {
@@ -116,6 +123,8 @@ export default function App() {
     void loadPuzzle(difficulty);
   }, [difficulty, loadPuzzle]);
 
+  // This effect is async orchestration, not persistent data.
+  // It checks solved status by calling backend and then updates UI state.
   const runCheckSolved = useCallback(
     async (grid: Grid) => {
       if (!game.puzzleId) return;
@@ -175,17 +184,24 @@ export default function App() {
       });
   }, [game.grid, liveValidation]);
 
+  // Completion check runs for both live modes.
+  // Trigger only when grid transitions from incomplete to complete.
   useEffect(() => {
-    if (liveValidation) return;
-    if (!gridFilled(game.grid)) return;
+    const isComplete = gridFilled(game.grid);
 
-    const key = JSON.stringify(game.grid);
-    if (lastAutoCheckGrid.current === key) return;
-    lastAutoCheckGrid.current = key;
+    if (isComplete && !wasCompleteRef.current) {
+      wasCompleteRef.current = true;
+      void runCheckSolved(game.grid);
+      return;
+    }
 
-    void runCheckSolved(game.grid);
-  }, [game.grid, liveValidation, runCheckSolved]);
+    if (!isComplete) {
+      wasCompleteRef.current = false;
+    }
+  }, [game.grid, runCheckSolved]);
 
+  // Central mutation gate.
+  // Event handler calls this, state is cloned, updated, then React rerenders.
   const applyAction = useCallback(
     (mutator: (grid: Grid, notes: number[][][]) => { changed: boolean; cleanup: boolean }) => {
       setGame((prev) => {
@@ -207,7 +223,6 @@ export default function App() {
         };
 
         const undo = [...prev.undo, snapshot].slice(-5);
-        lastAutoCheckGrid.current = "";
 
         return {
           ...prev,
@@ -220,9 +235,22 @@ export default function App() {
     [selected],
   );
 
+  // Derived state comes from existing state and is not stored separately.
+  // Here each digit is disabled when it already appears nine times.
+  const disabledDigits = useMemo(() => {
+    const counts = Array.from({ length: 10 }, () => 0);
+    for (const row of game.grid) {
+      for (const value of row) {
+        if (value >= 1 && value <= 9) counts[value] += 1;
+      }
+    }
+    return Array.from({ length: 10 }, (_, digit) => counts[digit] === 9);
+  }, [game.grid]);
+
   const handleDigit = useCallback(
     (digit: number) => {
       applyAction((grid, notes) => {
+        if (disabledDigits[digit]) return { changed: false, cleanup: false };
         if (!selected) return { changed: false, cleanup: false };
         const current = grid[selected.row][selected.col];
 
@@ -243,7 +271,7 @@ export default function App() {
         return { changed: true, cleanup: true };
       });
     },
-    [applyAction, notesMode, selected],
+    [applyAction, disabledDigits, notesMode, selected],
   );
 
   const handleClear = useCallback(() => {
@@ -272,7 +300,6 @@ export default function App() {
         undo: prev.undo.slice(0, -1),
       };
     });
-    lastAutoCheckGrid.current = "";
   }, []);
 
   const handleCheck = useCallback(() => {
@@ -283,6 +310,8 @@ export default function App() {
     void loadPuzzle(difficulty);
   }, [difficulty, loadPuzzle]);
 
+  // Keyboard and touch or click share the same action handlers.
+  // Flow is input event to state update to rerender.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key >= "1" && event.key <= "9") {
@@ -330,6 +359,7 @@ export default function App() {
         notesMode={notesMode}
         liveValidation={liveValidation}
         canUndo={game.undo.length > 0}
+        disabledDigits={disabledDigits}
         onDigit={handleDigit}
         onClear={handleClear}
         onToggleNotesMode={() => setNotesMode((prev) => !prev)}

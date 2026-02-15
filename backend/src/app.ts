@@ -8,14 +8,21 @@ import {
 } from "./sudoku/puzzle-bank";
 import { validateGrid, type SudokuGrid } from "./sudoku/validate";
 
+// This file defines the Express application object and route handlers.
+// Think of this like a Pascal unit interface that exposes callable routines.
+// The server startup is kept in index.ts so tests can call handlers directly.
 export const app = express();
 
 app.use(express.json());
 
+// A RequestHandler is a function that receives request and response objects.
+// It reads input, applies domain logic, and writes an HTTP response.
 export const healthHandler: RequestHandler = (_req, res) => {
   res.json({ ok: true });
 };
 
+// The backend is stateless for game progress.
+// Each request carries all data needed for validation or solved checks.
 const isValidGrid = (input: unknown): input is SudokuGrid => {
   if (!Array.isArray(input) || input.length !== 9) return false;
   return input.every(
@@ -74,6 +81,7 @@ export const checkSolvedHandler: RequestHandler = (req, res) => {
   res.json(result);
 };
 
+// Route table for the app unit.
 app.get("/health", healthHandler);
 app.get("/api/puzzle", puzzleHandler);
 app.post("/api/validate", validateHandler);

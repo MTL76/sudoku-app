@@ -11,10 +11,13 @@ type SudokuGridProps = {
 
 const keyFor = (row: number, col: number) => `${row}:${col}`;
 
+// Helper for highlight logic inside one 3x3 region.
 const isSameBox = (a: Point, b: Point) =>
   Math.floor(a.row / 3) === Math.floor(b.row / 3) &&
   Math.floor(a.col / 3) === Math.floor(b.col / 3);
 
+// This component is a focused view unit.
+// It receives state from App and emits user intent through onSelect.
 export function SudokuGrid({
   grid,
   givens,
@@ -28,6 +31,7 @@ export function SudokuGrid({
   return (
     <section className="grid-wrap" aria-label="Sudoku grid">
       <div className="sudoku-grid" role="grid">
+        {/* Render logic is pure from props, so rerender always reflects latest state. */}
         {grid.map((row, rowIndex) =>
           row.map((value, colIndex) => {
             const isGiven = givens[rowIndex][colIndex] !== 0;
