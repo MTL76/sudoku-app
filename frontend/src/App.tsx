@@ -332,11 +332,25 @@ export default function App() {
     return game.givens[selected.row][selected.col] !== 0;
   }, [game.givens, selected]);
 
+  const statusTone = useMemo(() => {
+    if (statusMessage === "Puzzle solved") return "success";
+    if (
+      statusMessage === "Grid has conflicts" ||
+      statusMessage === "Grid is complete but not solved" ||
+      statusMessage === "Check failed"
+    ) {
+      return "error";
+    }
+    if (statusMessage === "Checking puzzle") return "checking";
+    if (statusMessage === "Loading puzzle") return "loading";
+    return "neutral";
+  }, [statusMessage]);
+
   return (
     <div className="app-shell">
       <TopBar difficulty={difficulty} onDifficultyChange={setDifficulty} />
 
-      <div className="status-card" aria-live="polite">
+      <div className={`status-card status-${statusTone}`} aria-live="polite">
         <p className="status-line">{statusMessage}</p>
         <p className="status-line muted">
           {notesMode ? "Notes mode on" : "Notes mode off"} · {liveValidation ? "Live check on" : "Live check off"}
