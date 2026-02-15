@@ -1,9 +1,12 @@
 {
   "scripts": {
-    "dev": "sh -c 'npm run dev --prefix backend & npm run dev --prefix frontend'"
+    "dev": "concurrently --names backend,frontend --prefix-colors blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.18",
+    "concurrently": "^9.2.1",
     "vitest": "^4.0.18"
   }
 }

@@ -14,8 +14,11 @@ export type ValidationResult = {
   errors: ValidationError[];
 };
 
+// Sudoku uses digits 1 to 9.
+// Value 0 means empty and is ignored during conflict checks.
 const isFilledValue = (value: number): boolean => value >= 1 && value <= 9;
 
+// For one region, row column or box, group cells by value and report duplicates.
 const pushDuplicateErrors = (
   errors: ValidationError[],
   positions: Array<{ row: number; col: number; value: number }>,
@@ -41,6 +44,12 @@ const pushDuplicateErrors = (
   }
 };
 
+// Conceptual flow:
+// 1) verify shape is 9x9
+// 2) scan each row for duplicate digits
+// 3) scan each column for duplicate digits
+// 4) scan each 3x3 box for duplicate digits
+// The function is pure and stateless so callers can safely run it any time.
 export function validateGrid(grid: SudokuGrid): ValidationResult {
   const errors: ValidationError[] = [];
 
