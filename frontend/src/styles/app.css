@@ -188,11 +188,23 @@ body {
 
 .cell-given {
   color: var(--given);
-  font-weight: 600;
 }
 
 .cell-user {
   color: var(--user);
+}
+
+.cell-value {
+  display: inline-block;
+  line-height: 1;
+  font-size: inherit;
+}
+
+.cell-value-given {
+  font-weight: 500;
+}
+
+.cell-value-user {
   font-weight: 700;
 }
 
