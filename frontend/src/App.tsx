@@ -82,7 +82,7 @@ const initialGameState: GameState = {
 // You can map it to a Pascal form that coordinates child units.
 export default function App() {
   // Stored state is mutable session data that changes over time.
-  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [difficulty, setDifficulty] = useState<Difficulty>("intermediate");
   const [game, setGame] = useState<GameState>(initialGameState);
   const [selected, setSelected] = useState<Point | null>(null);
   const [notesMode, setNotesMode] = useState(false);
