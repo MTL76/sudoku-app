@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "puzzle:build": "node scripts/build-puzzle-bank.mjs --source data/puzzles-dataset.json --count 200 --out src/sudoku/puzzles.json"
   },
   "keywords": [],
   "author": "",
