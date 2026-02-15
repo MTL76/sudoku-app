@@ -4,7 +4,9 @@ import {
   getPuzzleById,
   getRandomPuzzle,
   isGridSolved,
-  parseDifficulty,
+  mapUiToSourceDifficulty,
+  parseUiDifficulty,
+  type UIDifficulty,
 } from "./sudoku/puzzle-bank";
 import { validateGrid, type SudokuGrid } from "./sudoku/validate";
 
@@ -34,28 +36,33 @@ const isValidGrid = (input: unknown): input is SudokuGrid => {
 };
 
 export const puzzleHandler: RequestHandler = (req, res) => {
-  const difficulty = parseDifficulty(req.query.difficulty);
-  if (!difficulty) {
+  const rawDifficulty = req.query.difficulty;
+  const parsedDifficulty =
+    rawDifficulty == null ? "intermediate" : parseUiDifficulty(rawDifficulty);
+
+  if (!parsedDifficulty) {
     res.status(400).json({
-      error:
-        "difficulty query must be one of easy intermediate difficult expert",
+      error: "difficulty query must be one of easy intermediate hard",
     });
     return;
   }
 
+  const difficulty: UIDifficulty = parsedDifficulty;
+  const sourceDifficulty = mapUiToSourceDifficulty(difficulty);
+
   let puzzle;
   try {
-    puzzle = getRandomPuzzle(difficulty);
+    puzzle = getRandomPuzzle(sourceDifficulty);
   } catch (_error) {
     res.status(500).json({
-      error: `no puzzles available for difficulty ${difficulty}`,
+      error: `no puzzles available for source difficulty ${sourceDifficulty}`,
     });
     return;
   }
 
   res.json({
     puzzleId: puzzle.puzzleId,
-    difficulty: puzzle.difficulty,
+    difficulty,
     grid: puzzle.grid,
   });
 };

@@ -25,6 +25,7 @@ describe("API", () => {
   });
 
   it("GET /api/puzzle returns puzzle for valid difficulty", () => {
+    vi.spyOn(Math, "random").mockReturnValueOnce(0);
     const { json } = createRes();
     const req = { query: { difficulty: "easy" } } as unknown as Request;
     const res = { json } as unknown as Response;
@@ -33,8 +34,52 @@ describe("API", () => {
 
     const payload = json.mock.calls[0][0];
     expect(payload.difficulty).toBe("easy");
+    expect(payload.puzzleId).toBe("intermediate-001");
     expect(payload.puzzleId).toBeTypeOf("string");
     expect(payload.grid).toHaveLength(9);
+    vi.restoreAllMocks();
+  });
+
+  it("GET /api/puzzle defaults difficulty to intermediate", () => {
+    vi.spyOn(Math, "random").mockReturnValueOnce(0);
+    const { json } = createRes();
+    const req = { query: {} } as unknown as Request;
+    const res = { json } as unknown as Response;
+
+    puzzleHandler(req, res, (() => undefined) as never);
+
+    const payload = json.mock.calls[0][0];
+    expect(payload.difficulty).toBe("intermediate");
+    expect(payload.puzzleId).toBe("difficult-001");
+    vi.restoreAllMocks();
+  });
+
+  it("GET /api/puzzle maps intermediate to difficult source", () => {
+    vi.spyOn(Math, "random").mockReturnValueOnce(0);
+    const { json } = createRes();
+    const req = { query: { difficulty: "intermediate" } } as unknown as Request;
+    const res = { json } as unknown as Response;
+
+    puzzleHandler(req, res, (() => undefined) as never);
+
+    const payload = json.mock.calls[0][0];
+    expect(payload.puzzleId).toBe("difficult-001");
+    expect(payload.difficulty).toBe("intermediate");
+    vi.restoreAllMocks();
+  });
+
+  it("GET /api/puzzle maps hard to expert source", () => {
+    vi.spyOn(Math, "random").mockReturnValueOnce(0);
+    const { json } = createRes();
+    const req = { query: { difficulty: "hard" } } as unknown as Request;
+    const res = { json } as unknown as Response;
+
+    puzzleHandler(req, res, (() => undefined) as never);
+
+    const payload = json.mock.calls[0][0];
+    expect(payload.puzzleId).toBe("expert-001");
+    expect(payload.difficulty).toBe("hard");
+    vi.restoreAllMocks();
   });
 
   it("GET /api/puzzle can return different puzzleIds across requests", () => {

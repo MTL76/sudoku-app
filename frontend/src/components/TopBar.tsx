@@ -8,8 +8,7 @@ type TopBarProps = {
 const OPTIONS: Difficulty[] = [
   "easy",
   "intermediate",
-  "difficult",
-  "expert",
+  "hard",
 ];
 
 export function TopBar({ difficulty, onDifficultyChange }: TopBarProps) {

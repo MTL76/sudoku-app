@@ -1,6 +1,6 @@
 export type Grid = number[][];
 
-export type Difficulty = "easy" | "intermediate" | "difficult" | "expert";
+export type Difficulty = "easy" | "intermediate" | "hard";
 
 export type PuzzleResponse = {
   puzzleId: string;
